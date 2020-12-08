@@ -46,11 +46,37 @@
 (insta/visualize (cobol-identifier "hello-there"))
 (cobol-identifier "hello-there")
 
+;; In Roam [[backlinks]] are used
+;; [[backlinks[[can nest]]]] and be used anywhere on the line
+(def backlink-parser
+  (insta/parser
+   "Line = (back-link / text)*
+    back-link = <'[' '['> (back-link / text)* <']' ']'> (* Use PEG syntax for preference*)
+    <text> = #'.'"))
 
-(doall
- (map
-  (partial insta/parse cobol-identifier)
-  ["hello9" "-hello" "hello-there" "set--up" "number-on-the-end-a" "setup-"]))
+(backlink-parser "Arbitrary **Text**! [[hello[[nested-link]] there [[this]]]]")
+(insta/visualize (backlink-parser "[[Back Link![[Inside!]]]]"))
+
+;; In Roam **emphasis** is supported for bolding text
+;; **emphasis** nesting is meaningless and doesn't need to be supported
+(def emphasis-parser
+  (insta/parser
+   "line = (emphasis / text)*
+    emphasis = <'*' '*'> (text)* <'*' '*'>
+    text = #'.' "))
+
+(emphasis-parser "Text **strong**")
+
+;; In Roam __ittalics__ are supported for bolding text
+;; __ittalics__ nesting is meaningless and doesn't need to be supported
+(def ittalic-parser
+  (insta/parser
+   "line = (ittalics / text)*
+    ittalics = <'_' '_'> (text)* <'_' '_'>
+    text = #'.' "))
+
+(ittalic-parser "Text __ittalic__")
+
 
 ;; Parser for Toy Robot:
 ;; There is a table top robot that follows commands in the following format:
