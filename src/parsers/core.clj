@@ -77,6 +77,52 @@
 
 (ittalic-parser "Text __ittalic__")
 
+;; First attempt at creating a parser for Roam-Research
+(def roam-parser
+  (insta/parser
+   "line = (back-link / emphasis / highlight / latex / italics / ref / roam-render / img / alias / char)+ | epsilon
+    back-link = <'[' '['> back-link-able* <']' ']'>
+
+    (* Visual Style Forms *)
+    emphasis = <'*' '*'> emphasis-able* <'*' '*'>
+    italics = <'_' '_'> emphasis-able* <'_' '_'>
+    highlight = <'^' '^'> highlight-able* <'^' '^'>
+    latex = <'$' '$'> char* <'$' '$'>
+    ref = <'(' '('> char* <')' ')'>
+    roam-render = <'{' '{'> roam-render-able* <'}' '}'>
+
+    (* Aliases and Images *)
+    description = <'['> alias-able* <']'>
+    url = <'('> char* <')'>
+    alias = description url
+    img = <'!'> description url
+
+    (* Define allowed inner elements (including nesting control) *)
+    <back-link-able> = back-link / emphasis / char
+    <emphasis-able> = back-link / char
+    <highlight-able> = emphasis / italics / back-link / char
+    <roam-render-able> = roam-render / char
+    <alias-able> = alias / img / char
+
+    <char> = (!'$' '$') (!'^' '^') / (!'*' '*') / (!'_' '_') / (#'.')  (*Greedy solution for now?*)"))
+
+(insta/visualize ( roam-parser "[![name](imgrul)](http://www.)"))
+
+
+(time
+  (insta/parse
+   roam-parser
+   "- [alias![imageAlia`s](imageUrl)](this) {{roam {{render}}}} ((ref)) $$latex$$ ^^__yes__^^ *[[**em[[meme]]**]] __i__ **em** **em** **em**")))
+
+(def remove-ambiguity
+  (insta/parser
+   "S = (em / char)+ | epsilon
+    em = <'*' '*'> char* <'*' '*'>
+    <char> = #'.'"))
+
+(insta/parses remove-ambiguity "**em** **em**")
+
+
 
 ;; Parser for Toy Robot:
 ;; There is a table top robot that follows commands in the following format:
@@ -97,4 +143,5 @@
   "I don't do a whole lot ... yet."
   [& args]
   (println "Hello, World!"))
+
 
