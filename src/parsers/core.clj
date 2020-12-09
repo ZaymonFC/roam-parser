@@ -83,10 +83,12 @@
    "line = (back-link / emphasis / highlight / latex / italics / ref / roam-render / img / alias / char)+ | epsilon
     back-link = <'[' '['> back-link-able* <']' ']'>
 
-    (* Visual Style Forms *)
+    (* Visual Forms *)
     emphasis = <'*' '*'> emphasis-able* <'*' '*'>
     italics = <'_' '_'> emphasis-able* <'_' '_'>
     highlight = <'^' '^'> highlight-able* <'^' '^'>
+
+    (* Logic Forms *)
     latex = <'$' '$'> char* <'$' '$'>
     ref = <'(' '('> char* <')' ')'>
     roam-render = <'{' '{'> roam-render-able* <'}' '}'>
@@ -100,6 +102,7 @@
     (* Define allowed inner elements (including nesting control) 
        - Easily define which forms are valid inside others (Ability to create common rules here)
        - Define which forms can recursively appear within themselves *)
+
     <back-link-able> = back-link / emphasis / char
     <emphasis-able> = back-link / char
     <highlight-able> = emphasis / italics / back-link / char
@@ -107,8 +110,6 @@
     <alias-able> = alias / img / char
 
     <char> = !'**' !'^^' !'__' !'$$' (#'.') (* This might have to be implemented for each form type *)"))
-
-(insta/parses roam-parser "**em** **em** __hello!__")
 
 (time
  (insta/parse
