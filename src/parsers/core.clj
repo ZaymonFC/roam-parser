@@ -43,7 +43,6 @@
     letter = #'[a-zA-Z]'
     digit = #'[0-9]+'"))
 
-(insta/visualize (cobol-identifier "hello-there"))
 (cobol-identifier "hello-there")
 
 ;; In Roam [[backlinks]] are used
@@ -77,21 +76,31 @@
 
 (ittalic-parser "Text __ittalic__")
 
+;; Attempt to remove ambiguity from the parser in the case of
+;; **em** **em**
+(def remove-ambiguity
+  (insta/parser
+   "S = (em / char)+ | epsilon
+    em = <'*' '*'> char* <'*' '*'>
+    <char> = !'**' #'.'"))
+
+(insta/parses remove-ambiguity "**em** **em**")
+
 ;; First attempt at creating a parser for Roam-Research
 (def roam-parser
   (insta/parser
-   "line = (back-link / emphasis / highlight / latex / italics / ref / roam-render / img / alias / char)+ | epsilon
-    back-link = <'[' '['> back-link-able* <']' ']'>
+   "line = ( back-link / emphasis / highlight / latex / italics / ref / roam-render / img / alias / char )+ | epsilon
+    back-link = <'[['> back-link-able* <']]'>
 
     (* Visual Forms *)
-    emphasis = <'*' '*'> emphasis-able* <'*' '*'>
-    italics = <'_' '_'> emphasis-able* <'_' '_'>
-    highlight = <'^' '^'> highlight-able* <'^' '^'>
+    emphasis = <'**'> emphasis-able* <'**'>
+    italics = <'__'> emphasis-able* <'__'>
+    highlight = <'^^'> highlight-able* <'^^'>
 
     (* Logic Forms *)
-    latex = <'$' '$'> char* <'$' '$'>
-    ref = <'(' '('> char* <')' ')'>
-    roam-render = <'{' '{'> roam-render-able* <'}' '}'>
+    latex = <'$$'> char* <'$$'>
+    ref = <'(('> char* <'))'>
+    roam-render = <'{{'> roam-render-able* <'}}'>
 
     (* Aliases and Images *)
     description = <'['> alias-able* <']'>
@@ -106,23 +115,18 @@
     <back-link-able> = back-link / emphasis / char
     <emphasis-able> = back-link / char
     <highlight-able> = emphasis / italics / back-link / char
-    <roam-render-able> = roam-render / char
+    <roam-render-able> = roam-render / back-link / char
     <alias-able> = alias / img / char
 
+    (* PEG Negative Lookahead `!'__'`: proceeds with concatenation chain if the lookahead doesn't match *)
     <char> = !'**' !'^^' !'__' !'$$' (#'.') (* This might have to be implemented for each form type *)"))
 
 (time
- (insta/parse
+ (insta/parses
   roam-parser
-  "- [alias![imageAlia`s](imageUrl)](this) {{roam {{render}}}} ((ref)) $$latex$$ ^^__yes__^^ *[[**em[[meme]]**]] __i__ **em** **em** **em**"))
+  "[alias![imageAlia`s](imageUrl)](this) {{roam {{[[Done]]}}}} ((ref)) $$latex$$ ^^__yes__^^ *[[**em[[meme]]**]] __i__ **em** **em** **em**"))
 
-(def remove-ambiguity
-  (insta/parser
-   "S = (em / char)+ | epsilon
-    em = <'*' '*'> char* <'*' '*'>
-    <char> = !'**' #'.'"))
 
-(insta/parses remove-ambiguity "**em** **em**")
 
 
 
