@@ -89,7 +89,7 @@
 ;; First attempt at creating a parser for Roam-Research
 (def roam-parser
   (insta/parser
-   "line = ( back-link / emphasis / highlight / latex / italics / ref / roam-render / img / alias / char )+ | epsilon
+   "line = ( ( back-link | emphasis | highlight | latex | italics | ref | roam-render | img | alias | code-inline | code-block) / char )+ | epsilon
     back-link = <'[['> back-link-able* <']]'>
 
     (* Visual Forms *)
@@ -108,6 +108,14 @@
     alias = description url
     img = <'!'> description url
 
+    (* Code Blocks *)
+    code-inline = <'`'> char* <'`'>
+    code-language = letter+
+    <code-block-start> = '\n' <'```'> [code-language]
+    <code-block-end> = <'```'>
+    code-block-content = char*
+    code-block = code-block-start '\n' code-block-content '\n' code-block-end
+
     (* Define allowed inner elements (including nesting control) 
        - Easily define which forms are valid inside others (Ability to create common rules here)
        - Define which forms can recursively appear within themselves *)
@@ -119,15 +127,16 @@
     <alias-able> = alias / img / char
 
     (* PEG Negative Lookahead `!'__'`: proceeds with concatenation chain if the lookahead doesn't match *)
-    <char> = !'**' !'^^' !'__' !'$$' (#'.') (* This might have to be implemented for each form type *)"))
+    <char> = !'**' !'^^' !'__' !'$$' (#'.') (* This might have to be implemented for each form type *)
+    <letter> = #'[A-Za-z]'"))
+
+(roam-parser ">[[back link]] `inline code` \n```clojure\nsdkfj\n```")
+
 
 (time
- (insta/parses
+ (insta/parse
   roam-parser
-  "[alias![imageAlia`s](imageUrl)](this) {{roam {{[[Done]]}}}} ((ref)) $$latex$$ ^^__yes__^^ *[[**em[[meme]]**]] __i__ **em** **em** **em**"))
-
-
-
+  "[alias![imageAlias](imageUrl)](this) {{roam {{[[Done]]}}}} ((ref)) $$latex$$ ^^__yes__^^ *[[**em[[meme]]**]] __i__ **em** **em** **em**"))
 
 
 ;; Parser for Toy Robot:
