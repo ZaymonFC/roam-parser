@@ -88,12 +88,25 @@
 ;; First attempt at creating a parser for Roam-Research
 (def roam-parser
   (insta/parser
-   "line = ( ( back-link | emphasis | highlight | latex | italics | ref | roam-render | img | alias | code-inline | code-block) / text / newline )+ | epsilon
+   "line =
+      ( ( back-link
+        | bold
+        | italic
+        | highlight
+        | latex
+        | ref
+        | roam-render
+        | img
+        | link
+        | code-inline
+        | code-block) / text / newline )+ (* Use peg `/` to give preference over basic text *)
+      | epsilon (* epsilon = empty *)
+  
     back-link = <'[['> back-link-able* <']]'>
 
     (* Visual Forms *)
-    emphasis = <'**'> emphasis-able* <'**'>
-    italics = <'__'> emphasis-able* <'__'>
+    bold = <'**'> emphasis-able* <'**'>
+    italic = <'__'> emphasis-able* <'__'>
     highlight = <'^^'> highlight-able* <'^^'>
 
     (* Logic Forms *)
@@ -101,10 +114,10 @@
     ref = <'(('> text <'))'>
     roam-render = <'{{'> roam-render-able* <'}}'>
 
-    (* Aliases and Images *)
+    (* Links and Images *)
     description = <'['> alias-able* <']'>
-    url = <'('> link <')'>
-    alias = description url
+    url = <'('> href <')'>
+    link = description (back-link | url)
     img = <'!'> description url
 
     (* Code Blocks *)
@@ -118,26 +131,29 @@
     (* Define allowed inner elements (including nesting control) 
        - Easily define which forms are valid inside others (Ability to create common rules here)
        - Define which forms can recursively appear within themselves *)
-    <back-link-able> = back-link / emphasis / text
-    <emphasis-able> = back-link / text
-    <highlight-able> = emphasis / italics / back-link / text
-    <roam-render-able> = roam-render / back-link / text
-    <alias-able> = alias / img / text
 
-    <newline> = <'\n'>
+    <back-link-able> = back-link / bold / text
+    <emphasis-able> = back-link / text
+    <highlight-able> = bold / italic / back-link / text
+    <roam-render-able> = roam-render / back-link / text
+    <alias-able> = img / text
+
+    <newline> = '\n'
     (* PEG Negative Lookahead `!'__'`: proceeds with concatenation chain if the lookahead doesn't match *)
     text = char*
-    link = char*
+    href = char*
     <char> = !'**' !'^^' !'__' !'$$' (#'.') (* This might have to be implemented for each form type *)
     <letter> = #'[A-Za-z]' "))
 
 ;; Define a way to transform a tree from the bottom up into a more meaningful representation for display.
 (defn text [& children] [:p (apply str children)])
-(defn link [& children] [:a (apply str children)])
 
-(defn emphasis [& children] [:strong children])
-(defn latex [& children] [:latex (apply str children)])
-(defn image [& children] [:image (apply str children)])
+;; TODO: Define code that links a link or image and computes the flat structure in html
+(defn url [& children] [:a [:href (apply str children)]])
+
+(defn bold [& children] [:strong children])
+(defn italic [& children] [:em children])
+(defn latex [& children] [:code (apply str children)])
 
 (defn code-inline [& children] [:code-inline (apply str children)])
 (defn code-block-language [& children] [:code-block-languge (apply str children)])
@@ -145,13 +161,13 @@
 
 (def transformation-map
   {:text text
-   :link link
-   :emphasis emphasis
+   :bold bold
+   :italic italic
    :latex latex
-   :image image
    :code-inline code-inline
    :code-block-language code-block-language
-   :code-block-content code-block-content})
+   :code-block-content code-block-content
+   :url url})
 
 (defn tree-transform [t] (insta/transform transformation-map t))
 
@@ -160,5 +176,5 @@
        roam-parser
        (tree-transform)))
 
-(parse-text "[alias![imageAlias](imageUrl)](this) {{roam {{[[Done]]}}}} ((ref)) $$latex$$ ^^__yes__^^ *[[**em[[meme]]**]] __i__ **em** **em** **em** `let inlineCode = 100`\n```clojure\n(def code-block-contents [x 100])\n```")
+(time (parse-text "[alias![imageAlias](imageUrl)](this) {{roam {{[[Done]]}}}} ((ref)) $$latex$$ ^^__yes__^^ *[[**em[[meme]]**]] __i__ **em** **em** **em** `let inlineCode = 100`\n```clojure\n(def code-block-contents [x 100])\n```"))
 
