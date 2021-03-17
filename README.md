@@ -1,44 +1,18 @@
-# parsers
+# roam-parser
+A complete parser for the roam research document format.
 
-FIXME: description
+### Features
+- Specified in [EBNF](https://www.ics.uci.edu/~pattis/misc/ebnf2.pdf)
+- Implemented with the Clojure parsing library [Instaparse](https://github.com/Engelberg/instaparse)
+- Outputs parse results into a syntax tree
+- Some tree processing to get the output format closer to HTML
 
-## Installation
+[View the final parser](https://github.com/ZaymonFC/roam-parser/blob/c9fc2e7d346a71c32063d854998aeb59c7a60855/src/parsers/core.clj#L89)
 
-Download from http://example.com/FIXME.
+### Limitations
+- Parser implementation fast, but not fast enough for generating AST of thousands of lines of with acceptable UX.
+- Doesn't output entirely valid HTML but it's close.
 
-## Usage
+### Example usage
 
-FIXME: explanation
-
-    $ java -jar parsers-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
-
-## License
-
-Copyright © 2020 FIXME
-
-This program and the accompanying materials are made available under the
-terms of the Eclipse Public License 2.0 which is available at
-http://www.eclipse.org/legal/epl-2.0.
-
-This Source Code may also be made available under the following Secondary
-Licenses when the conditions for such availability set forth in the Eclipse
-Public License, v. 2.0 are satisfied: GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or (at your
-option) any later version, with the GNU Classpath Exception which is available
-at https://www.gnu.org/software/classpath/license.html.
+![image](https://user-images.githubusercontent.com/12402727/111412777-ccd6c180-8728-11eb-9198-9e33a3d477ba.png)
